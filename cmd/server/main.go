@@ -21,15 +21,10 @@ func main() {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("RECEIVED Request: %+v\n\n", *r)
 
-		bodyReader := r.Body
-		//r.GetBody()
-
-		//buf := new(strings.Builder)
 		buf := bytes.Buffer{}
-		io.Copy(&buf, bodyReader)
-		fmt.Printf("Body of Request: %+v\n\n", buf)
-		//fmt.Fprintf(w, "Hello, %v, http: %v", r.URL.Path, r.TLS == nil)
-		//http.Error(w, "Some error", http.StatusGatewayTimeout)
+		io.Copy(&buf, r.Body)
+		r.Body.Close()
+		//fmt.Printf("Body of Request: %+v\n\n", buf)
 
 		client := http.Client{
 			Transport: &http2.Transport{
@@ -43,18 +38,46 @@ func main() {
 			},
 		}
 
-		emptyReq, _ := http.NewRequest("POST", "http://127.0.0.1:8080", nil)
-		emptyReq.URL.Path = "/tensorflow.serving.PredictionService/Predict"
-		r.URL = emptyReq.URL
-		r.RequestURI
+		println("Creating new request")
+		req, _ := http.NewRequest("POST", "http://127.0.0.1:8080", nil)
+		req.URL.Path = "/tensorflow.serving.PredictionService/Predict"
+		//req.URL.Path = "/tensorflow.serving.PredictionService/Predict"
+		//req.URL.Host = "http://127.0.0.1:8080"
+		////req = *req2 // Comment this out to use manual Request
+		req.Proto = "HTTP/2.0"
+		req.ProtoMajor = 2
+		req.ProtoMinor = 0
 
-		//revProxy := httputil.NewSingleHostReverseProxy(emptyReq.URL)
+		header := http.Header{}
+		//println("Copying headers")
+		//copyHeader(header, r.Header)
 
-		//Proxy the request ...
-		//revProxy.ModifyResponse = func(r *http.Response) error {
-		//	fmt.Printf("Response from proxy: %+v\n\n-----------------\n", r)
-		//	return nil
-		//}
+		header.Set("Content-Type", "application/grpc")
+		header.Set("Grpc-Accept-Encoding", "gzip")
+		header.Set("Grpc-Encoding", "gzip")
+		header.Add("User-Agent", "throttleProxy")
+
+		req.Header = header
+		println("Creating body")
+		req.Body = io.NopCloser(&buf)
+		//io.Copy(req.Body, r.Body)
+
+		//header.Set("Content-Type", "application/grpc")
+		//header.Set("Grpc-Accept-Encoding", "gzip")
+		//header.Set("Grpc-Encoding", "gzip")
+		//header.Add("User-Agent", "throttleProxy")
+		////header.Add("Path", "/tensorflow.serving.PredictionService/Predict")
+		//req.Header = header
+		////req.RequestURI = "/tensorflow.serving.PredictionService/Predict"
+		////req.Host = "/tensorflow.serving.PredictionService/Predict"
+		//
+		//read := bytes.NewReader([]byte{0, 0, 0, 0, 61, 10, 32, 10, 13, 104, 97, 108, 102, 95, 112, 108, 117, 115, 95, 116, 119, 111, 26, 15, 115, 101, 114, 118, 105, 110, 103, 95, 100, 101, 102, 97, 117, 108, 116, 18, 25, 10, 1, 120, 18, 20, 8, 1, 42, 16, 0, 0, 128, 63, 0, 0, 0, 64, 0, 0, 64, 64, 0, 0, 128, 64})
+		//rc := io.NopCloser(read)
+		//req.Body = rc
+		//r.URL.Path = "/tensorflow.serving.PredictionService/Predict"
+		//r.URL.Host = "http://127.0.0.1:8080"
+		//revProxy := httputil.NewSingleHostReverseProxy(req.URL)
+		//rp := NewProxy
 
 		//t := &http2.Transport{
 		//	// So http2.Transport doesn't complain the URL scheme isn't 'https'
@@ -67,23 +90,33 @@ func main() {
 		//}
 		//revProxy.Transport = t
 		//revProxy.ServeHTTP(w, r)
-		//revProxy.Transport.RoundTrip(r)
 
-		//http.HandlerFunc()
-		//r.Host = fmt.Sprintf("http://localhost:%s", PORT)
-		//r.URL.RequestURI()
-		resp, err := client.Do(r)
+		println("About to send request")
+		resp, err := client.Do(req)
+
 		if err != nil {
 			fmt.Printf("Error is: %+v\n", err)
 		} else {
 			fmt.Printf("Response is: %+v\n\n", resp)
+			//respBuf := bytes.Buffer{}
+			//io.Copy(&respBuf, resp.Body)
+			//fmt.Printf("ResponseBody is:%+v\n", respBuf)
+			//	w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
+			//	w.Header().Set("Grpc-Encoding", resp.Header.Get("Grpc-Encoding"))
+			copyHeader(w.Header(), resp.Header)
+			//copyHeader(w.Header(), resp.Trailer)
+			//w.Header().Set(http2.TrailerPrefix, resp.Trailer)
+			//w.Header().Set(http2.TrailerPrefix, "end")
+			//defer func() {
+			//	w.Header().Set("end", "this")
+			//}()
+			//resp.Body.Close()
 			io.Copy(w, resp.Body)
-
+			resp.Body.Close()
+			//w.Write(io.EOF)
 		}
 
 	})
-	//a.Write([]byte{31, 139, 8, 0, 0, 0, 0, 0, 0, 255, 226, 18, 228, 226, 40, 74, 45, 46, 200, 207, 43, 78, 21, 98, 181, 98, 102, 100, 98, 6, 4, 0, 0, 255, 255, 83, 46, 113, 12, 19, 0, 0, 0})
-	//a.Write([]byte{31, 139, 8, 0, 0, 0, 0, 0, 0, 255, 226, 82, 224, 226, 205, 72, 204, 73, 139, 47, 200, 41, 45, 142, 47, 41, 207, 151, 226, 47, 78, 45, 42, 203, 204, 75, 143, 79, 73, 77, 75, 44, 205, 41, 17, 146, 228, 98, 172, 16, 18, 225, 96, 212, 18, 96, 96, 104, 176, 103, 96, 96, 112, 96, 96, 112, 112, 96, 96, 104, 112, 0, 4, 0, 0, 255, 255, 40, 53, 85, 182, 61, 0, 0, 0})
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf("0.0.0.0:%s", PORT),
@@ -98,7 +131,10 @@ func main() {
 	}
 }
 
-//Listening [0.0.0.0:8080]...
-//RECEIVED Request: {Method:POST URL:/tensorflow.serving.PredictionService/Predict Proto:HTTP/2.0 ProtoMajor:2 ProtoMinor:0 Header:map[Content-Type:[application/grpc] Grpc-Accept-Encoding:[gzip] Te:[trailers] User-Agent:[grpc-go/1.54.0]] Body:0xc00008c240 GetBody:<nil> ContentLength:-1 TransferEncoding:[] Close:false Host:localhost:8080 Form:map[] PostForm:map[] MultipartForm:<nil> Trailer:map[] RemoteAddr:[::1]:59548 RequestURI:/tensorflow.serving.PredictionService/Predict TLS:<nil> Cancel:<nil> Response:<nil> ctx:0xc0000960a0}
-//
-//Body of Request: {buf:[0 0 0 0 61 10 32 10 13 104 97 108 102 95 112 108 117 115 95 116 119 111 26 15 115 101 114 118 105 110 103 95 100 101 102 97 117 108 116 18 25 10 1 120 18 20 8 1 42 16 0 0 128 63 0 0 0 64 0 0 64 64 0 0 128 64] off:0 lastRead:0}
+func copyHeader(dst, src http.Header) {
+	for k, vv := range src {
+		for _, v := range vv {
+			dst.Add(k, v)
+		}
+	}
+}

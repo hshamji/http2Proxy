@@ -63,19 +63,19 @@ func main() {
 	fmt.Printf("Complete request: %+v\n", req2)
 	fmt.Printf("CompleteURL: %+v\n", req2.URL)
 	req := http.Request{}
-	req.URL = &url.URL{
-		Scheme:      "http",
-		Opaque:      "",
-		User:        nil,
-		Host:        "http://127.0.0.1:8080",
-		Path:        "/tensorflow.serving.PredictionService/Predict",
-		RawPath:     "",
-		OmitHost:    false,
-		ForceQuery:  false,
-		RawQuery:    "",
-		Fragment:    "",
-		RawFragment: "",
-	}
+	//req.URL = &url.URL{
+	//	Scheme:      "http",
+	//	Opaque:      "",
+	//	User:        nil,
+	//	Host:        "http://127.0.0.1:8080",
+	//	Path:        "/tensorflow.serving.PredictionService/Predict",
+	//	RawPath:     "",
+	//	OmitHost:    false,
+	//	ForceQuery:  false,
+	//	RawQuery:    "",
+	//	Fragment:    "",
+	//	RawFragment: "",
+	//}
 
 	req2.URL.Path = "/tensorflow.serving.PredictionService/Predict"
 	req = *req2 // Comment this out to use manual Request
