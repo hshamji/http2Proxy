@@ -11,8 +11,9 @@ import (
 	"net/http"
 )
 
-// const PORT = "78"
-const PORT = "8080"
+const PORT = "78"
+
+//const PORT = "8080"
 
 func main() {
 	h2s := &http2.Server{}
@@ -42,12 +43,42 @@ func main() {
 			},
 		}
 
-		r.Host = fmt.Sprintf("http://localhost:%s", PORT)
+		emptyReq, _ := http.NewRequest("POST", "http://127.0.0.1:8080", nil)
+		emptyReq.URL.Path = "/tensorflow.serving.PredictionService/Predict"
+		r.URL = emptyReq.URL
+		r.RequestURI
+
+		//revProxy := httputil.NewSingleHostReverseProxy(emptyReq.URL)
+
+		//Proxy the request ...
+		//revProxy.ModifyResponse = func(r *http.Response) error {
+		//	fmt.Printf("Response from proxy: %+v\n\n-----------------\n", r)
+		//	return nil
+		//}
+
+		//t := &http2.Transport{
+		//	// So http2.Transport doesn't complain the URL scheme isn't 'https'
+		//	AllowHTTP: true,
+		//	// Pretend we are dialing a TLS endpoint.
+		//	// Note, we ignore the passed tls.Config
+		//	DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
+		//		return net.Dial(network, addr)
+		//	},
+		//}
+		//revProxy.Transport = t
+		//revProxy.ServeHTTP(w, r)
+		//revProxy.Transport.RoundTrip(r)
+
+		//http.HandlerFunc()
+		//r.Host = fmt.Sprintf("http://localhost:%s", PORT)
+		//r.URL.RequestURI()
 		resp, err := client.Do(r)
 		if err != nil {
 			fmt.Printf("Error is: %+v\n", err)
 		} else {
 			fmt.Printf("Response is: %+v\n\n", resp)
+			io.Copy(w, resp.Body)
+
 		}
 
 	})

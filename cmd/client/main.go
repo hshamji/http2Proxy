@@ -103,9 +103,13 @@ func main() {
 		fmt.Printf("Error is %+v\n\n", err)
 	} else {
 		fmt.Printf("Response is %+v\n\n", resp)
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		fmt.Printf("Output of body: %+v\n\n---------------------", buf.Bytes())
 	}
 }
 
-//RECEIVED Request: {Method:POST URL:/tensorflow.serving.PredictionService/Predict Proto:HTTP/2.0 ProtoMajor:2 ProtoMinor:0 Header:map[Content-Type:[application/grpc] Grpc-Accept-Encoding:[gzip] Grpc-Encoding:[gzip] Te:[trailers] User-Agent:[grpc-go/1.54.0]] Body:0xc00008c240 GetBody:<nil> ContentLength:-1 TransferEncoding:[] Close:false Host:localhost:8080 Form:map[] PostForm:map[] MultipartForm:<nil> Trailer:map[] RemoteAddr:[::1]:59225 RequestURI:/tensorflow.serving.PredictionService/Predict TLS:<nil> Cancel:<nil> Response:<nil> ctx:0xc0000960a0}
-//
-//Body of Request: {buf:[1 0 0 0 85 31 139 8 0 0 0 0 0 0 255 226 82 224 226 205 72 204 73 139 47 200 41 45 142 47 41 207 151 226 47 78 45 42 203 204 75 143 79 73 77 75 44 205 41 17 146 228 98 172 16 18 225 96 212 18 96 96 104 176 103 96 96 112 96 96 112 112 96 96 104 112 0 4 0 0 255 255 40 53 85 182 61 0 0 0] off:0 lastRead:0}
+//Bytes Received Before Decompression: [31 139 8 0 0 0 0 0 0 255 226 82 224 226 205 72 204 73 139 47 200 41 45 142 47 41 207 151 226 47 78 45 42 203 204 75 143 79 73 77 75 44 205 41 17 146 228 98 172 16 18 225 96 212 18 96 96 104 176 103 96 96 112 96 96 112 112 96 96 104 112 0 4 0 0 255 255 40 53 85 182 61 0 0 0]
+//----Received request: 2023-05-18 10:47:37.245479 -0400 EDT m=+587.269083524
+//Request is :model_spec:{name:"half_plus_two" signature_name:"serving_default"} inputs:{key:"x" value:{dtype:DT_FLOAT float_val:1 float_val:2 float_val:3 float_val:4}}<<
+//Metadata: map[:authority:[127.0.0.1:8080] accept-encoding:[gzip] content-type:[application/grpc] grpc-accept-encoding:[gzip] user-agent:[throttleProxy]]The received compressor is :gzip
